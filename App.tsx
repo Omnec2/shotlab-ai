@@ -1175,7 +1175,7 @@ export default function App() {
                     }} className="p-7 bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] hover:border-blue-500/30 transition-all cursor-pointer group flex flex-col min-h-[220px] relative shadow-2xl">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-all" />
 
-                      <div className="flex justify-between items-start mb-4 relative z-10">
+                      <div className="flex justify-between items-start mb-4 relative z-20">
                         <div className="flex-1 min-w-0 pr-8">
                           <h4 className="text-xl md:text-2xl font-black group-hover:text-blue-400 transition-colors truncate mb-1">{project.name}</h4>
                           {project.pitch && (
