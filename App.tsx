@@ -240,9 +240,96 @@ const Badge = ({ children, icon: Icon, color = 'blue' }: any) => {
   );
 };
 
+const DebouncedText = ({ value, onChange, placeholder, className }: { value: string, onChange: (val: string) => void, placeholder: string, className?: string }) => {
+  const [localValue, setLocalValue] = useState(value);
+  const isFocused = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!isFocused.current) {
+      setLocalValue(value);
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newVal = e.target.value;
+    setLocalValue(newVal);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onChange(newVal);
+    }, 1000);
+  };
+
+  const handleBlur = () => {
+    isFocused.current = false;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    onChange(localValue);
+  };
+
+  const handleFocus = () => {
+    isFocused.current = true;
+  };
+
+  return (
+    <textarea
+      value={localValue}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className={className || "flex-1 bg-white/5 border border-white/5 rounded-2xl p-6 md:p-8 font-mono text-base md:text-lg resize-none focus:outline-none custom-scrollbar leading-relaxed"}
+      placeholder={placeholder}
+    />
+  );
+};
+
+const DebouncedInput = ({ value, onChange, placeholder, className }: { value: string, onChange: (val: string) => void, placeholder: string, className?: string }) => {
+  const [localValue, setLocalValue] = useState(value);
+  const isFocused = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!isFocused.current) {
+      setLocalValue(value);
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVal = e.target.value;
+    setLocalValue(newVal);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onChange(newVal);
+    }, 1000);
+  };
+
+  const handleBlur = () => {
+    isFocused.current = false;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    onChange(localValue);
+  };
+
+  const handleFocus = () => {
+    isFocused.current = true;
+  };
+
+  return (
+    <input
+      type="text"
+      value={localValue}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className={className}
+      placeholder={placeholder}
+    />
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<{ credits: number, isVip: boolean } | null>(null);
+  const [profile, setProfile] = useState<{ credits: number, isVip: boolean, customPresets?: { id: string, label: string, vision: string }[] } | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
 
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
@@ -257,6 +344,10 @@ export default function App() {
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectPitch, setNewProjectPitch] = useState('');
+  const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [activeProjectMenuId, setActiveProjectMenuId] = useState<string | null>(null);
   const [editingShotIndex, setEditingShotIndex] = useState<number | null>(null);
   const [exportFormat, setExportFormat] = useState<'breakdown' | 'storyboard'>('breakdown');
   const [exportSeqId, setExportSeqId] = useState<string>('');
@@ -266,6 +357,15 @@ export default function App() {
   const [isExporting, setIsExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const [confirmationModal, setConfirmationModal] = useState<{ isOpen: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setUpdateAvailable(true);
+    };
+    window.addEventListener('pwaUpdateAvailable', handleUpdate);
+    return () => window.removeEventListener('pwaUpdateAvailable', handleUpdate);
+  }, []);
 
   const t = translations[language];
 
@@ -278,9 +378,9 @@ export default function App() {
         const profileRef = doc(db, "users", currentUser.uid);
         const unsubscribeProfile = onSnapshot(profileRef, async (docSnap) => {
           if (docSnap.exists()) {
-            setProfile(docSnap.data() as { credits: number, isVip: boolean });
+            setProfile(docSnap.data() as { credits: number, isVip: boolean, customPresets?: { id: string, label: string, vision: string }[] });
           } else {
-            const initialProfile = { credits: 20, isVip: false };
+            const initialProfile = { credits: 20, isVip: false, customPresets: [] };
             await setDoc(profileRef, initialProfile);
           }
         });
@@ -513,6 +613,39 @@ export default function App() {
     }
   };
 
+  const handleSavePreset = async () => {
+    if (!user || !profile || !currentProject?.customStyle) return;
+    const name = prompt(language === 'fr' ? "Nom du preset :" : "Preset name:");
+    if (!name) return;
+
+    const newPreset = {
+      id: Math.random().toString(36).substr(2, 9),
+      label: name,
+      vision: currentProject.customStyle
+    };
+
+    try {
+      const profileRef = doc(db, "users", user.uid);
+      const updatedPresets = [...(profile.customPresets || []), newPreset];
+      await updateDoc(profileRef, { customPresets: updatedPresets });
+      showNotification(language === 'fr' ? "Preset sauvegardé !" : "Preset saved!");
+    } catch (e) {
+      showNotification("Erreur de sauvegarde", "error");
+    }
+  };
+
+  const handleDeletePreset = async (id: string) => {
+    if (!user || !profile) return;
+    try {
+      const profileRef = doc(db, "users", user.uid);
+      const updatedPresets = (profile.customPresets || []).filter(p => p.id !== id);
+      await updateDoc(profileRef, { customPresets: updatedPresets });
+      showNotification(language === 'fr' ? "Preset supprimé" : "Preset deleted");
+    } catch (e) {
+      showNotification("Erreur de suppression", "error");
+    }
+  };
+
   const chunk = <T,>(arr: T[], size: number): T[][] => {
     return Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
       arr.slice(i * size, i * size + size)
@@ -728,36 +861,77 @@ export default function App() {
             )}
 
             <div className="pt-2 border-t border-white/5">
-              <Button onClick={() => setCurrentView(View.TRASH)} variant="secondary" icon={Trash2} className="w-full py-4 md:py-6 rounded-2xl md:rounded-[2rem] text-sm md:text-base font-black mb-4">
+              <Button onClick={() => setCurrentView(View.TRASH)} variant="secondary" icon={Trash2} className="w-full py-4 md:py-6 rounded-2xl md:rounded-[2rem] text-sm md:text-base font-black">
                 {t.trash}
-              </Button>
-              <Button onClick={handleLogout} variant="danger" icon={LogOut} className="w-full py-4 md:py-6 rounded-2xl md:rounded-[2rem] text-sm md:text-base font-black">
-                {t.logout}
               </Button>
             </div>
           </div>
+
+          {/* User Presets Management */}
+          {profile?.customPresets && profile.customPresets.length > 0 && (
+            <div className="bg-[#0c0c0e] border border-white/5 p-5 md:p-10 rounded-3xl md:rounded-[3rem] space-y-6 md:shadow-3xl">
+              <div className="flex items-center gap-3 text-[10px] font-black uppercase text-blue-400 tracking-[0.2em]">
+                <Aperture size={12} /> Mes Presets
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                {profile.customPresets.map(preset => (
+                  <div key={preset.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-all group">
+                    <div>
+                      <h4 className="text-sm font-black text-white">{preset.label}</h4>
+                      <p className="text-[10px] text-neutral-500 font-medium truncate max-w-[200px] md:max-w-md">{preset.vision}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (confirm(language === 'fr' ? 'Supprimer ce preset ?' : 'Delete this preset?')) {
+                          handleDeletePreset(preset.id);
+                        }
+                      }}
+                      className="text-neutral-600 hover:text-red-500 transition-colors p-2"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-8">
-          <div className="bg-blue-600/5 border border-blue-500/10 p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] space-y-6 md:space-y-8">
-            <div className="w-12 h-12 md:w-20 md:h-20 bg-blue-600/20 rounded-2xl md:rounded-3xl flex items-center justify-center text-blue-400">
-              <Info size={24} className="md:size-[40px]" />
+          <div className="bg-blue-600/5 border border-blue-500/10 p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] space-y-6 md:space-y-8 h-full flex flex-col justify-between">
+            <div className="space-y-6 md:space-y-8">
+              <div className="w-12 h-12 md:w-20 md:h-20 bg-blue-600/20 rounded-2xl md:rounded-3xl flex items-center justify-center text-blue-400">
+                <Info size={24} className="md:size-[40px]" />
+              </div>
+              <div>
+                <h4 className="text-xl md:text-3xl font-black mb-3 md:mb-4">Besoin d'assistance ?</h4>
+                <p className="text-sm md:text-lg text-neutral-400 leading-relaxed font-medium">
+                  Notre équipe est là pour vous accompagner dans vos projets de préproduction.
+                </p>
+              </div>
+              <div className="pt-2 md:pt-4">
+                <a
+                  href="https://wa.me/message/4BTEJPMTE725F1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full md:w-auto bg-white/5 border border-white/10 px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl text-white font-black text-xs md:text-sm flex items-center justify-center md:inline-flex gap-3 hover:bg-white/10 transition-all font-black"
+                >
+                  Contacter le support <ArrowRight size={16} md:size={18} />
+                </a>
+              </div>
             </div>
-            <div>
-              <h4 className="text-xl md:text-3xl font-black mb-3 md:mb-4">Besoin d'assistance ?</h4>
-              <p className="text-sm md:text-lg text-neutral-400 leading-relaxed font-medium">
-                Notre équipe est là pour vous accompagner dans vos projets de préproduction.
-              </p>
-            </div>
-            <div className="pt-2 md:pt-4">
-              <a
-                href="https://wa.me/message/4BTEJPMTE725F1"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full md:w-auto bg-white/5 border border-white/10 px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl text-white font-black text-xs md:text-sm flex items-center justify-center md:inline-flex gap-3 hover:bg-white/10 transition-all font-black"
+
+            <div className="mt-auto pt-8 border-t border-white/5 flex flex-col items-center gap-4">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500 hover:text-red-500 hover:bg-red-500/5 transition-all border border-transparent hover:border-red-500/10"
               >
-                Contacter le support <ArrowRight size={16} md:size={18} />
-              </a>
+                <LogOut size={14} /> {t.logout}
+              </button>
+              <div className="flex flex-col items-center gap-1 opacity-50">
+                <span className="text-[9px] font-black uppercase tracking-[0.3em]">ShotLab Studio</span>
+                <span className="text-[8px] font-bold text-neutral-500 uppercase tracking-widest">v1.1.5 Méliès</span>
+              </div>
             </div>
           </div>
         </div>
@@ -993,32 +1167,126 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto custom-scrollbar pb-10">
                   {projects.filter(p => !p.isDeleted).map(project => (
-                    <div key={project.id} onClick={() => { setCurrentProject(project); setActiveSequenceId(project.sequences[0].id); setCurrentView(View.SCRIPT); }} className="p-6 bg-[#0c0c0e] border border-white/5 rounded-3xl hover:border-blue-500/30 transition-all cursor-pointer group flex flex-col justify-between min-h-[160px]">
-                      <div className="flex justify-between items-start mb-4">
-                        <h4 className="text-xl font-black group-hover:text-blue-400 transition-colors truncate">{project.name}</h4>
-                        <button onClick={async e => {
-                          e.stopPropagation();
-                          setConfirmationModal({
-                            isOpen: true,
-                            title: "Supprimer ce projet ?",
-                            message: "Le projet sera déplacé dans la corbeille.",
-                            onConfirm: async () => {
-                              await updateDoc(doc(db, "projects", project.id), { isDeleted: true, deletedAt: Date.now() });
-                              setConfirmationModal(null);
-                              showNotification(t.moveToTrash);
-                            }
-                          });
-                        }} className="text-neutral-600 hover:text-red-400 transition-colors p-1"><Trash2 size={18} /></button>
-                      </div>
-                      <div className="flex justify-between items-center pt-4 border-t border-white/5 text-[10px] font-black uppercase tracking-widest text-neutral-600">
-                        <div className="flex flex-col gap-1">
-                          <span>{new Date(project.updatedAt).toLocaleDateString()}</span>
-                          <span className="text-blue-500/70">{project.sequences.length} {project.sequences.length > 1 ? t.sequences : t.sequence} • {project.sequences.reduce((acc, s) => acc + s.shots.length, 0)} Plans</span>
+                    <div key={project.id} onClick={() => { setCurrentProject(project); setActiveSequenceId(project.sequences[0].id); setCurrentView(View.SCRIPT); }} className="p-7 bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] hover:border-blue-500/30 transition-all cursor-pointer group flex flex-col min-h-[220px] relative overflow-hidden shadow-2xl">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-all" />
+
+                      <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div className="flex-1 min-w-0 pr-8">
+                          <h4 className="text-xl md:text-2xl font-black group-hover:text-blue-400 transition-colors truncate mb-1">{project.name}</h4>
+                          {project.pitch && (
+                            <p className="text-neutral-500 text-xs font-semibold line-clamp-2 leading-relaxed mb-4">
+                              {project.pitch}
+                            </p>
+                          )}
                         </div>
-                        <FolderOpen size={16} className="group-hover:text-blue-400 transition-colors" />
+
+                        <div className="relative">
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              setActiveProjectMenuId(activeProjectMenuId === project.id ? null : project.id);
+                            }}
+                            className="text-neutral-600 hover:text-white transition-colors p-2 bg-white/5 rounded-xl border border-white/5"
+                          >
+                            <MoreVertical size={18} />
+                          </button>
+
+                          {activeProjectMenuId === project.id && (
+                            <div className="absolute top-full right-0 mt-2 w-48 bg-[#121214] border border-white/10 rounded-2xl shadow-2xl z-[100] p-2 animate-in fade-in zoom-in-95 duration-200">
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setEditingProject(project);
+                                  setIsEditProjectModalOpen(true);
+                                  setActiveProjectMenuId(null);
+                                }}
+                                className="w-full flex items-center gap-3 p-3 rounded-xl text-xs font-black text-neutral-400 hover:text-white hover:bg-white/5 transition-all text-left"
+                              >
+                                <Edit3 size={14} /> Modifier
+                              </button>
+                              <div className="h-px bg-white/5 my-1" />
+                              <button
+                                onClick={async e => {
+                                  e.stopPropagation();
+                                  setConfirmationModal({
+                                    isOpen: true,
+                                    title: "Supprimer ce projet ?",
+                                    message: "Le projet sera déplacé dans la corbeille.",
+                                    onConfirm: async () => {
+                                      await updateDoc(doc(db, "projects", project.id), { isDeleted: true, deletedAt: Date.now() });
+                                      setConfirmationModal(null);
+                                      showNotification(t.moveToTrash);
+                                    }
+                                  });
+                                  setActiveProjectMenuId(null);
+                                }}
+                                className="w-full flex items-center gap-3 p-3 rounded-xl text-xs font-black text-red-400 hover:text-red-500 hover:bg-red-500/5 transition-all text-left"
+                              >
+                                <Trash2 size={14} /> Supprimer
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-auto relative z-10 pt-6 border-t border-white/5 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-neutral-600">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="opacity-60">{new Date(project.updatedAt).toLocaleDateString()}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-blue-500/70">{project.sequences.length} {project.sequences.length > 1 ? t.sequences : t.sequence}</span>
+                            <span className="w-1 h-1 rounded-full bg-neutral-800" />
+                            <span className="text-neutral-400">{project.sequences.reduce((acc, s) => acc + s.shots.length, 0)} Plans</span>
+                          </div>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-neutral-500 group-hover:text-blue-400 group-hover:border-blue-500/30 transition-all">
+                          <FolderOpen size={18} />
+                        </div>
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Edit Project Modal */}
+            {isEditProjectModalOpen && editingProject && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl no-print">
+                <div className="w-full max-w-sm bg-[#0c0c0e] border border-white/10 p-8 rounded-[2rem] space-y-8 shadow-3xl">
+                  <h3 className="text-3xl font-black tracking-tight">Modifier</h3>
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        defaultValue={editingProject.name}
+                        id="edit-project-name"
+                        placeholder="Titre du film"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-base font-bold outline-none focus:border-blue-500 transition-all"
+                      />
+                      <textarea
+                        defaultValue={editingProject.pitch || ''}
+                        id="edit-project-pitch"
+                        placeholder="Pitch du film (optionnel)"
+                        rows={3}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:border-blue-500 transition-all resize-none"
+                      />
+                    </div>
+                    <div className="flex gap-4">
+                      <Button onClick={() => { setIsEditProjectModalOpen(false); setEditingProject(null); }} variant="secondary" className="flex-1 py-4 rounded-2xl">{t.cancel}</Button>
+                      <Button onClick={async () => {
+                        const name = (document.getElementById('edit-project-name') as HTMLInputElement).value;
+                        const pitch = (document.getElementById('edit-project-pitch') as HTMLTextAreaElement).value;
+                        if (!name.trim()) return;
+                        try {
+                          await updateDoc(doc(db, "projects", editingProject.id), { name, pitch, updatedAt: Date.now() });
+                          setIsEditProjectModalOpen(false);
+                          setEditingProject(null);
+                          showNotification("Projet mis à jour");
+                        } catch (e) {
+                          showNotification("Erreur de mise à jour", "error");
+                        }
+                      }} variant="magic" className="flex-1 py-4 rounded-2xl">Enregistrer</Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1092,17 +1360,16 @@ export default function App() {
 
                 <div className="flex-1 overflow-hidden min-h-0 flex flex-col print:h-auto print:overflow-visible">
                   {currentView === View.SCRIPT && (
-                    <div className="h-full flex flex-col space-y-4 animate-in slide-in-from-bottom-2 duration-500">
+                    <div className="h-full flex flex-col space-y-4 animate-in slide-in-from-bottom-2 duration-500 overflow-y-auto custom-scrollbar pb-20">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                           <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest">Script : {t.sequence} {getActiveSequence()?.number}</h3>
                         </div>
                       </div>
-                      <textarea
+                      <DebouncedText
                         value={getActiveSequence()?.script || ''}
-                        onChange={e => updateSequenceData({ script: e.target.value })}
-                        className="flex-1 bg-white/5 border border-white/5 rounded-2xl p-6 md:p-8 font-mono text-base md:text-lg resize-none focus:outline-none custom-scrollbar leading-relaxed"
+                        onChange={val => updateSequenceData({ script: val })}
                         placeholder="Collez ou rédigez votre séquence..."
                       />
 
@@ -1113,8 +1380,24 @@ export default function App() {
                             <Aperture size={12} /> Mise en scène
                           </div>
                           <div className="w-full md:w-80 flex items-center bg-[#121214] border border-white/10 rounded-xl p-1 pr-3">
-                            <select value={currentProject?.style} onChange={e => updateProjectData({ style: e.target.value })} className="bg-transparent text-white text-xs font-black outline-none px-4 py-3 flex-1 appearance-none">
+                            <select
+                              value={currentProject?.style}
+                              onChange={e => {
+                                const selectedStyle = e.target.value;
+                                if (selectedStyle === 'Standard' || selectedStyle === 'Custom') {
+                                  updateProjectData({ style: selectedStyle });
+                                } else {
+                                  const preset = profile?.customPresets?.find(p => p.id === selectedStyle);
+                                  if (preset) {
+                                    // Store the preset ID as the style, but keep the vision string for generation
+                                    updateProjectData({ style: selectedStyle, customStyle: preset.vision });
+                                  }
+                                }
+                              }}
+                              className="bg-transparent text-white text-xs font-black outline-none px-4 py-3 flex-1 appearance-none"
+                            >
                               {STYLES_LIST.map(s => <option key={s.id} value={s.id} className="bg-[#121214]">{s.label}</option>)}
+                              {profile?.customPresets?.map(p => <option key={p.id} value={p.id} className="bg-[#121214]">{p.label}</option>)}
                             </select>
                             <ChevronDown size={16} className="text-neutral-500 shrink-0" />
                           </div>
@@ -1122,12 +1405,18 @@ export default function App() {
 
                         {currentProject?.style === 'Custom' && (
                           <div className="flex-[2] w-full space-y-2">
-                            <div className="text-[10px] font-black uppercase text-neutral-500 tracking-[0.2em] ml-1">Vision artistique</div>
-                            <input
-                              type="text"
+                            <div className="text-[10px] font-black uppercase text-neutral-500 tracking-[0.2em] ml-1 flex justify-between items-center">
+                              Vision artistique
+                              {currentProject.customStyle && (
+                                <button onClick={handleSavePreset} className="text-blue-400 hover:text-blue-300 transition-colors lowercase font-bold tracking-normal flex items-center gap-1">
+                                  <Plus size={10} /> {language === 'fr' ? 'Sauvegarder en preset' : 'Save as preset'}
+                                </button>
+                              )}
+                            </div>
+                            <DebouncedInput
                               placeholder={t.customStylePlaceholder}
                               value={currentProject.customStyle || ''}
-                              onChange={e => updateProjectData({ customStyle: e.target.value })}
+                              onChange={val => updateProjectData({ customStyle: val })}
                               className="w-full bg-[#121214] border border-white/10 rounded-xl px-6 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-all"
                             />
                           </div>
@@ -1357,19 +1646,29 @@ export default function App() {
           <div className="w-full max-w-sm bg-[#0c0c0e] border border-white/10 p-8 rounded-[2rem] space-y-8 shadow-3xl">
             <h3 className="text-3xl font-black tracking-tight">{t.newProduction}</h3>
             <div className="space-y-6">
-              <input
-                type="text"
-                value={newProjectName}
-                onChange={e => setNewProjectName(e.target.value)}
-                placeholder="Titre du film"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-base font-bold outline-none focus:border-blue-500"
-              />
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  value={newProjectName}
+                  onChange={e => setNewProjectName(e.target.value)}
+                  placeholder="Titre du film"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-base font-bold outline-none focus:border-blue-500 transition-all"
+                />
+                <textarea
+                  value={newProjectPitch}
+                  onChange={e => setNewProjectPitch(e.target.value)}
+                  placeholder="Pitch du film (optionnel)"
+                  rows={3}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:border-blue-500 transition-all resize-none"
+                />
+              </div>
               <div className="flex gap-4">
-                <Button onClick={() => setIsNewProjectModalOpen(false)} variant="secondary" className="flex-1 py-4 rounded-2xl">{t.cancel}</Button>
+                <Button onClick={() => { setIsNewProjectModalOpen(false); setNewProjectPitch(''); setNewProjectName(''); }} variant="secondary" className="flex-1 py-4 rounded-2xl">{t.cancel}</Button>
                 <Button onClick={async () => {
                   if (!newProjectName.trim() || !user) return;
                   const newProject = {
                     name: newProjectName,
+                    pitch: newProjectPitch,
                     style: 'Standard',
                     updatedAt: Date.now(),
                     ownerId: user.uid,
@@ -1383,6 +1682,7 @@ export default function App() {
                     setCurrentView(View.SCRIPT);
                     setIsNewProjectModalOpen(false);
                     setNewProjectName('');
+                    setNewProjectPitch('');
                   } catch (e) {
                     showNotification("Erreur de création", "error");
                   }
@@ -1521,6 +1821,17 @@ export default function App() {
           <div className={`px-8 py-3 rounded-full shadow-2xl backdrop-blur-3xl border text-[11px] font-black uppercase tracking-widest ${notification.type === 'error' ? 'bg-red-500/20 border-red-500/50 text-red-200' : 'bg-blue-600/20 border-blue-500/50 text-blue-100'}`}>
             {notification.message}
           </div>
+        </div>
+      )}
+      {updateAvailable && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[300] animate-in slide-in-from-top-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-full shadow-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-500 transition-all border border-blue-400/30"
+          >
+            <RefreshCw size={14} className="animate-spin-slow" />
+            Une mise à jour est disponible ! Cliquez pour rafraîchir
+          </button>
         </div>
       )}
     </div>

@@ -3,15 +3,6 @@ import { DirectorStyle } from './types';
 
 export const STYLES_LIST: DirectorStyle[] = [
   { id: 'Standard', label: 'Standard', desc: 'Classique & Efficace' },
-  { id: 'Kryss Omnec', label: 'Kryss Omnec', desc: 'Mix Nolan & Snyder' },
-  { id: 'Wes Anderson', label: 'Wes Anderson', desc: 'Symétrique & Pastel' },
-  { id: 'Christopher Nolan', label: 'Chris Nolan', desc: 'Réaliste & Grandiose' },
-  { id: 'Quentin Tarantino', label: 'Tarantino', desc: 'Contre-plongée & Intense' },
-  { id: 'Zack Snyder', label: 'Zack Snyder', desc: 'Ralentis & Contraste' },
-  { id: 'James Cameron', label: 'James Cameron', desc: 'Épique & Technique' },
-  { id: 'Denis Villeneuve', label: 'Denis Villeneuve', desc: 'Atmosphérique & Minimaliste' },
-  { id: 'Cyberpunk', label: 'Cyberpunk', desc: 'Néons & High Tech' },
-  { id: 'Film Noir', label: 'Film Noir', desc: 'Ombres & Lumières dramatiques' },
   { id: 'Custom', label: 'Personnalisé', desc: 'Votre vision unique' },
 ];
 

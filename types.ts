@@ -44,6 +44,7 @@ export interface Project {
   name: string;
   sequences: Sequence[];
   style: string;
+  pitch?: string;
   customStyle?: string;
   updatedAt: number;
   ownerId: string;
