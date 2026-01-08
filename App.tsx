@@ -974,7 +974,7 @@ export default function App() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.filter(p => p.isDeleted).map(project => (
-            <div key={project.id} className="p-6 bg-[#0c0c0e] border border-red-500/10 rounded-3xl hover:border-red-500/30 transition-all group flex flex-col justify-between min-h-[160px]">
+            <div key={project.id} className="p-6 bg-[#0c0c0e] border border-red-500/10 rounded-3xl hover:border-red-500/30 transition-all group flex flex-col justify-between min-h-[160px] overflow-hidden">
               <div className="flex justify-between items-start mb-4">
                 <h4 className="text-xl font-black text-neutral-400 group-hover:text-red-400 transition-colors truncate">{project.name}</h4>
                 <div className="flex gap-2">
@@ -1172,7 +1172,7 @@ export default function App() {
                       setCurrentProject(project);
                       setActiveSequenceId(project.sequences[0].id);
                       setCurrentView(View.SCRIPT);
-                    }} className="p-7 bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] hover:border-blue-500/30 transition-all cursor-pointer group flex flex-col min-h-[220px] relative shadow-2xl">
+                    }} className="p-7 bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] hover:border-blue-500/30 transition-all cursor-pointer group flex flex-col min-h-[220px] relative shadow-2xl overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-all" />
 
                       <div className="flex justify-between items-start mb-4 relative z-20">
@@ -1475,7 +1475,7 @@ export default function App() {
                           </div>
                           <div className="space-y-4">
                             {getActiveSequence()?.shots.map((shot, idx) => (
-                              <div key={idx} className="bg-[#0c0c0e] border border-white/5 rounded-3xl p-5 md:p-7 flex flex-col md:flex-row gap-6 relative group transition-all hover:border-blue-500/30 shadow-xl">
+                              <div key={idx} className="bg-[#0c0c0e] border border-white/5 rounded-3xl p-5 md:p-7 flex flex-col md:flex-row gap-6 relative group transition-all hover:border-blue-500/30 shadow-xl overflow-hidden">
                                 <div className="flex md:flex-col items-center justify-center bg-[#121214] rounded-2xl w-full md:w-24 h-12 md:h-24 shrink-0 border border-white/5 gap-2 md:gap-0">
                                   <span className="text-[8px] md:text-[10px] font-black text-neutral-600 uppercase tracking-widest">Plan</span>
                                   <span className="text-xl md:text-3xl font-black">{getActiveSequence()?.number}.{shot.id}</span>
