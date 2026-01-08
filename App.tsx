@@ -348,6 +348,7 @@ export default function App() {
   const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [activeProjectMenuId, setActiveProjectMenuId] = useState<string | null>(null);
+  const [activeShotMenuIndex, setActiveShotMenuIndex] = useState<number | null>(null);
   const [editingShotIndex, setEditingShotIndex] = useState<number | null>(null);
   const [exportFormat, setExportFormat] = useState<'breakdown' | 'storyboard'>('breakdown');
   const [exportSeqId, setExportSeqId] = useState<string>('');
@@ -1166,8 +1167,13 @@ export default function App() {
                   <Button onClick={() => setIsNewProjectModalOpen(true)} variant="magic" icon={Plus} className="px-5 py-2 text-xs rounded-xl shadow-none">Nouvelle Production</Button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto custom-scrollbar pb-10">
-                  {projects.filter(p => !p.isDeleted).map(project => (
-                    <div key={project.id} onClick={() => { setCurrentProject(project); setActiveSequenceId(project.sequences[0].id); setCurrentView(View.SCRIPT); }} className="p-7 bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] hover:border-blue-500/30 transition-all cursor-pointer group flex flex-col min-h-[220px] relative overflow-hidden shadow-2xl">
+                  {projects.filter(p => !p.isDeleted).map((project) => (
+                    <div key={project.id} onClick={(e) => {
+                      if ((e.target as HTMLElement).closest('.action-menu-container')) return;
+                      setCurrentProject(project);
+                      setActiveSequenceId(project.sequences[0].id);
+                      setCurrentView(View.SCRIPT);
+                    }} className="p-7 bg-[#0c0c0e] border border-white/5 rounded-[2.5rem] hover:border-blue-500/30 transition-all cursor-pointer group flex flex-col min-h-[220px] relative shadow-2xl">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-all" />
 
                       <div className="flex justify-between items-start mb-4 relative z-10">
@@ -1180,7 +1186,7 @@ export default function App() {
                           )}
                         </div>
 
-                        <div className="relative">
+                        <div className="relative action-menu-container">
                           <button
                             onClick={e => {
                               e.stopPropagation();
@@ -1206,16 +1212,21 @@ export default function App() {
                               </button>
                               <div className="h-px bg-white/5 my-1" />
                               <button
-                                onClick={async e => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   setConfirmationModal({
                                     isOpen: true,
                                     title: "Supprimer ce projet ?",
                                     message: "Le projet sera déplacé dans la corbeille.",
                                     onConfirm: async () => {
-                                      await updateDoc(doc(db, "projects", project.id), { isDeleted: true, deletedAt: Date.now() });
-                                      setConfirmationModal(null);
-                                      showNotification(t.moveToTrash);
+                                      try {
+                                        const projectRef = doc(db, "projects", project.id);
+                                        await updateDoc(projectRef, { isDeleted: true, deletedAt: Date.now() });
+                                        setConfirmationModal(null);
+                                        showNotification("Projet envoyé à la corbeille");
+                                      } catch (err) {
+                                        showNotification("Erreur lors de la suppression", "error");
+                                      }
                                     }
                                   });
                                   setActiveProjectMenuId(null);
@@ -1465,7 +1476,7 @@ export default function App() {
                           </div>
                           <div className="space-y-4">
                             {getActiveSequence()?.shots.map((shot, idx) => (
-                              <div key={idx} className="bg-[#0c0c0e] border border-white/5 rounded-3xl p-5 md:p-7 flex flex-col md:flex-row gap-6 relative group transition-all hover:border-blue-500/30 shadow-xl overflow-hidden">
+                              <div key={idx} className="bg-[#0c0c0e] border border-white/5 rounded-3xl p-5 md:p-7 flex flex-col md:flex-row gap-6 relative group transition-all hover:border-blue-500/30 shadow-xl">
                                 <div className="flex md:flex-col items-center justify-center bg-[#121214] rounded-2xl w-full md:w-24 h-12 md:h-24 shrink-0 border border-white/5 gap-2 md:gap-0">
                                   <span className="text-[8px] md:text-[10px] font-black text-neutral-600 uppercase tracking-widest">Plan</span>
                                   <span className="text-xl md:text-3xl font-black">{getActiveSequence()?.number}.{shot.id}</span>
@@ -1491,9 +1502,52 @@ export default function App() {
                                     )}
                                   </div>
                                 </div>
-                                <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                                  <button onClick={() => { setManualShot(shot); setEditingShotIndex(idx); setIsManualModalOpen(true); }} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-neutral-400 hover:text-white transition-all"><Edit3 size={18} /></button>
-                                  <button onClick={() => { const ns = [...getActiveSequence()!.shots]; ns.splice(idx, 1); updateSequenceData({ shots: ns }); }} className="p-3 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-xl transition-all border border-red-500/10"><Trash2 size={18} /></button>
+                                <div className="absolute top-6 right-6 no-print">
+                                  <div className="relative">
+                                    <button
+                                      onClick={() => setActiveShotMenuIndex(activeShotMenuIndex === idx ? null : idx)}
+                                      className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-neutral-400 hover:text-white transition-all border border-white/5"
+                                    >
+                                      <MoreVertical size={18} />
+                                    </button>
+
+                                    {activeShotMenuIndex === idx && (
+                                      <div className="absolute top-full right-0 mt-2 w-48 bg-[#121214] border border-white/10 rounded-2xl shadow-2xl z-[100] p-2 animate-in fade-in zoom-in-95 duration-200">
+                                        <button
+                                          onClick={() => {
+                                            setManualShot(shot);
+                                            setEditingShotIndex(idx);
+                                            setIsManualModalOpen(true);
+                                            setActiveShotMenuIndex(null);
+                                          }}
+                                          className="w-full flex items-center gap-3 p-3 rounded-xl text-xs font-black text-neutral-400 hover:text-white hover:bg-white/5 transition-all text-left"
+                                        >
+                                          <Edit3 size={14} /> Modifier
+                                        </button>
+                                        <div className="h-px bg-white/5 my-1" />
+                                        <button
+                                          onClick={() => {
+                                            setConfirmationModal({
+                                              isOpen: true,
+                                              title: "Supprimer ce plan ?",
+                                              message: "Cette action supprimera définitivement ce plan de la séquence.",
+                                              onConfirm: async () => {
+                                                const ns = [...getActiveSequence()!.shots];
+                                                ns.splice(idx, 1);
+                                                await updateSequenceData({ shots: ns });
+                                                setConfirmationModal(null);
+                                                showNotification("Plan supprimé");
+                                              }
+                                            });
+                                            setActiveShotMenuIndex(null);
+                                          }}
+                                          className="w-full flex items-center gap-3 p-3 rounded-xl text-xs font-black text-red-400 hover:text-red-500 hover:bg-red-500/5 transition-all text-left"
+                                        >
+                                          <Trash2 size={14} /> Supprimer
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ))}
