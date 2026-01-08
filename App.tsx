@@ -1011,7 +1011,7 @@ export default function App() {
   );
 
   return (
-    <div className={`flex w-full bg-[#050505] text-white selection:bg-blue-500/30 print:h-auto print:overflow-visible print:bg-white print:text-black ${user ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
+    <div className={`flex w-full bg-[#050505] text-white selection:bg-blue-500/30 print:h-auto print:overflow-visible print:bg-white print:text-black overflow-x-hidden ${user ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
       {user && renderSidebar()}
 
       <div className={`flex-1 flex flex-col relative print:h-auto print:overflow-visible ${user ? 'h-full overflow-hidden' : 'w-full'}`}>
@@ -1019,8 +1019,8 @@ export default function App() {
           <div className="w-full min-h-screen flex flex-col bg-[#050505] relative overflow-x-hidden">
             <div className="relative flex-1 flex flex-col items-center py-12 md:py-24 lg:py-32 p-6 md:p-12 lg:p-20">
               {/* Decorative Background Elements - Larger and softer */}
-              <div className="absolute -top-[20%] -left-[20%] w-[100vw] h-[100vw] bg-blue-600/10 rounded-full blur-[15vw] md:blur-[20vw] animate-pulse-slow no-print pointer-events-none" />
-              <div className="absolute -bottom-[20%] -right-[20%] w-[100vw] h-[100vw] bg-purple-600/5 rounded-full blur-[15vw] md:blur-[20vw] animate-pulse-slow no-print pointer-events-none" style={{ animationDelay: '2s' }} />
+              <div className="absolute -top-[20%] -left-[20%] w-[120%] h-[120%] bg-blue-600/10 rounded-full blur-[15vw] md:blur-[20vw] animate-pulse-slow no-print pointer-events-none" />
+              <div className="absolute -bottom-[20%] -right-[20%] w-[120%] h-[120%] bg-purple-600/5 rounded-full blur-[15vw] md:blur-[20vw] animate-pulse-slow no-print pointer-events-none" style={{ animationDelay: '2s' }} />
 
               <div className="relative z-10 w-full max-w-5xl flex flex-col items-center text-center space-y-12 md:space-y-20 animate-in fade-in zoom-in-95 duration-1000">
                 <div className="flex flex-col items-center">
@@ -1158,7 +1158,7 @@ export default function App() {
             )}
 
             {currentView === View.DASHBOARD && (
-              <div className="h-full flex flex-col space-y-8 animate-in fade-in slide-in-from-bottom-4">
+              <div className="h-full flex flex-col space-y-8 animate-in fade-in slide-in-from-bottom-4 overflow-x-hidden">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5">
                   <div>
                     <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-none mb-3">{t.myProjects}</h2>
@@ -1442,7 +1442,7 @@ export default function App() {
                   )}
 
                   {currentView === View.BREAKDOWN && (
-                    <div className="h-full overflow-y-auto custom-scrollbar space-y-6 pb-20 animate-in slide-in-from-bottom-2 duration-500 print:h-auto print:overflow-visible print:pb-0">
+                    <div className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar space-y-6 pb-20 animate-in slide-in-from-bottom-2 duration-500 print:h-auto print:overflow-visible print:pb-0">
                       {!getActiveSequence()?.shots.length ? (
                         <div className="h-full flex flex-col items-center justify-center text-center p-6 sm:p-12 bg-white/5 rounded-3xl border border-dashed border-white/10 animate-in fade-in zoom-in-95 duration-700">
                           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/5 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
