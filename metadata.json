@@ -1,0 +1,5 @@
+{
+  "name": "ShotLab AI",
+  "description": "A professional AI-powered film pre-production tool that transforms scripts into technical shot lists and visual storyboards using the latest Gemini models.",
+  "requestFramePermissions": []
+}
