@@ -1168,8 +1168,7 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto custom-scrollbar pb-10">
                   {projects.filter(p => !p.isDeleted).map((project) => (
-                    <div key={project.id} onClick={(e) => {
-                      if ((e.target as HTMLElement).closest('.action-menu-container')) return;
+                    <div key={project.id} onClick={() => {
                       setCurrentProject(project);
                       setActiveSequenceId(project.sequences[0].id);
                       setCurrentView(View.SCRIPT);
@@ -1186,7 +1185,7 @@ export default function App() {
                           )}
                         </div>
 
-                        <div className="relative action-menu-container">
+                        <div className="relative action-menu-container" onClick={e => e.stopPropagation()}>
                           <button
                             onClick={e => {
                               e.stopPropagation();
@@ -1502,7 +1501,7 @@ export default function App() {
                                     )}
                                   </div>
                                 </div>
-                                <div className="absolute top-6 right-6 no-print">
+                                <div className="absolute top-6 right-6 no-print" onClick={e => e.stopPropagation()}>
                                   <div className="relative">
                                     <button
                                       onClick={() => setActiveShotMenuIndex(activeShotMenuIndex === idx ? null : idx)}
