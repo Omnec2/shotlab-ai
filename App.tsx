@@ -195,11 +195,11 @@ const translations = {
 const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false, icon: Icon, loading = false }: any) => {
   const baseStyles = "relative flex items-center justify-center px-4 py-2 rounded-lg font-bold text-sm transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none select-none tracking-tight min-h-[42px]";
   const variants: any = {
-    primary: "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20 border border-blue-400/20",
-    secondary: "bg-white/5 hover:bg-white/10 text-white border border-white/10 backdrop-blur-md",
-    danger: "bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20",
-    magic: "bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-indigo-500/20 text-white border border-white/10",
-    premium: "bg-zinc-900 hover:bg-zinc-800 text-white border border-white/10 shadow-2xl hover:border-white/20",
+    primary: "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20",
+    secondary: "bg-white/5 hover:bg-white/10 text-white border border-white/5 backdrop-blur-md",
+    danger: "bg-red-500/10 hover:bg-red-500/20 text-red-400",
+    magic: "bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-indigo-500/20 text-white",
+    premium: "bg-zinc-900 hover:bg-zinc-800 text-white shadow-2xl hover:border-white/10",
   };
   return (
     <button onClick={onClick} disabled={disabled || loading} className={`${baseStyles} ${variants[variant]} ${className}`}>
@@ -1095,8 +1095,8 @@ export default function App() {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={`md:hidden fixed bottom-8 right-8 w-16 h-16 rounded-full flex items-center justify-center shadow-2xl z-[130] transition-all duration-500 active:scale-90 border backdrop-blur-md ${isMobileMenuOpen
-                ? 'bg-zinc-900 border-white/20 text-white rotate-90'
-                : 'bg-zinc-900/90 border-white/10 text-white hover:bg-zinc-800'
+                ? 'bg-zinc-900 border-white/20 text-red-500 rotate-90'
+                : 'bg-zinc-900/90 border-white/10 text-indigo-400 hover:bg-zinc-800'
                 }`}
             >
               {isMobileMenuOpen ? <X size={28} /> : <MoreVertical size={28} />}
@@ -1435,7 +1435,7 @@ export default function App() {
                       </div>
 
                       <div className="flex justify-center pt-8 pb-4">
-                        <Button onClick={handleGenerateBreakdown} loading={isAnalyzing} variant="premium" icon={Wand2} className="px-12 py-6 text-base rounded-[1.5rem] w-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <Button onClick={handleGenerateBreakdown} loading={isAnalyzing} variant="magic" icon={Wand2} className="px-12 py-6 text-base rounded-[1.5rem] w-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
                           {t.generate}
                         </Button>
                       </div>
