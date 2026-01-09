@@ -199,6 +199,7 @@ const Button = ({ children, onClick, variant = 'primary', className = '', disabl
     secondary: "bg-white/5 hover:bg-white/10 text-white border border-white/10 backdrop-blur-md",
     danger: "bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20",
     magic: "bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-indigo-500/20 text-white border border-white/10",
+    premium: "bg-zinc-900 hover:bg-zinc-800 text-white border border-white/10 shadow-2xl hover:border-white/20",
   };
   return (
     <button onClick={onClick} disabled={disabled || loading} className={`${baseStyles} ${variants[variant]} ${className}`}>
@@ -1094,8 +1095,8 @@ export default function App() {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={`md:hidden fixed bottom-8 right-8 w-16 h-16 rounded-full flex items-center justify-center shadow-2xl z-[130] transition-all duration-500 active:scale-90 border backdrop-blur-md ${isMobileMenuOpen
-                ? 'bg-white/10 border-white/20 text-white rotate-90'
-                : 'bg-blue-600/80 border-blue-400/30 text-white hover:bg-blue-600'
+                ? 'bg-zinc-900 border-white/20 text-white rotate-90'
+                : 'bg-zinc-900/90 border-white/10 text-white hover:bg-zinc-800'
                 }`}
             >
               {isMobileMenuOpen ? <X size={28} /> : <MoreVertical size={28} />}
@@ -1315,7 +1316,7 @@ export default function App() {
                 </div>
 
                 {/* Sequence Navigation UI */}
-                <div className="flex items-center gap-3 overflow-x-auto pb-4 custom-scrollbar no-print mb-6">
+                <div className="flex items-center gap-3 overflow-x-auto pt-4 pb-4 custom-scrollbar no-print mb-6">
                   {currentProject?.sequences.map(seq => (
                     <div key={seq.id} className="relative group shrink-0">
                       <button
@@ -1433,8 +1434,8 @@ export default function App() {
                         )}
                       </div>
 
-                      <div className="flex justify-center pt-2">
-                        <Button onClick={handleGenerateBreakdown} loading={isAnalyzing} variant="magic" icon={Wand2} className="px-10 py-5 text-base rounded-2xl w-full md:w-auto">
+                      <div className="flex justify-center pt-8 pb-4">
+                        <Button onClick={handleGenerateBreakdown} loading={isAnalyzing} variant="premium" icon={Wand2} className="px-12 py-6 text-base rounded-[1.5rem] w-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
                           {t.generate}
                         </Button>
                       </div>
