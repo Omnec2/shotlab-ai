@@ -193,10 +193,10 @@ const translations = {
 };
 
 const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false, icon: Icon, loading = false }: any) => {
-  const baseStyles = "relative flex items-center justify-center px-4 py-2 rounded-lg font-bold text-sm transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:pointer-events-none select-none tracking-tight min-h-[42px]";
+  const baseStyles = "relative flex items-center justify-center px-4 py-2 rounded-lg font-bold text-sm transition-all duration-300 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:pointer-events-none select-none tracking-tight min-h-[42px]";
   const variants: any = {
     primary: "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20",
-    secondary: "bg-white/5 hover:bg-white/10 text-white border border-white/5 backdrop-blur-md",
+    secondary: "bg-white/5 hover:bg-white/10 text-white border-none backdrop-blur-md",
     danger: "bg-red-500/10 hover:bg-red-500/20 text-red-400",
     magic: "bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-indigo-500/20 text-white",
     premium: "bg-zinc-900 hover:bg-zinc-800 text-white shadow-2xl hover:border-white/10",
@@ -1165,7 +1165,7 @@ export default function App() {
                     <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-none mb-3">{t.myProjects}</h2>
                     <p className="text-neutral-500 font-medium text-sm">En route pour une nouvelle création, <span className="text-blue-400 font-bold">{user?.displayName || user?.email?.split('@')[0]}</span> ?</p>
                   </div>
-                  <Button onClick={() => setIsNewProjectModalOpen(true)} variant="magic" icon={Plus} className="px-5 py-2 text-xs rounded-xl shadow-none">Nouvelle Production</Button>
+                  <Button onClick={() => setIsNewProjectModalOpen(true)} variant="magic" icon={Plus} className="px-5 py-2 text-xs rounded-xl shadow-none border-none">Nouvelle Production</Button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto custom-scrollbar pb-10">
                   {projects.filter(p => !p.isDeleted).map((project) => (
@@ -1435,7 +1435,7 @@ export default function App() {
                       </div>
 
                       <div className="flex justify-center pt-8 pb-4">
-                        <Button onClick={handleGenerateBreakdown} loading={isAnalyzing} variant="magic" icon={Wand2} className="px-12 py-6 text-base rounded-[1.5rem] w-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <Button onClick={handleGenerateBreakdown} loading={isAnalyzing} variant="magic" icon={Wand2} className="px-5 py-2 text-xs rounded-xl shadow-none border-none animate-in fade-in slide-in-from-bottom-4 duration-700">
                           {t.generate}
                         </Button>
                       </div>
